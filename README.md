@@ -6,6 +6,8 @@
 ## Workload
 
 ## Data preprocessing
+- Ground truth : We'll change the image to a csv file so we can compute IoU easier on it.
+- ![image](https://github.com/PierreMasserey/DIA_challenge/assets/43469697/1680abcd-20d5-4487-a576-5221d9cfcc01)
 
 ## Algorithms
 ### Machine learning
