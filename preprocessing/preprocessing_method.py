@@ -1,23 +1,28 @@
-from PIL import Image
+from PIL import ImageFilter, Image
+from PIL import ImageDraw
+import cv2
 import numpy as np
-import pandas as pd
-from skimage import measure
 
-image = Image.open('my_image.jpg')
-image_np = np.array(image)
+# Charger l'image
+image_path = "my_image.jpg"
+image = Image.open(image_path)
 
-#trouver les contours
-contours = measure.find_contours(np.array(image_np), 0.5)
+# Convertir l'image en niveaux de gris
+gray_image = image.convert("L")
 
-rectangles = []
+# Détection de contours
+contour_image = gray_image.filter(ImageFilter.FIND_EDGES)
 
-#add coordinate to the list
-for contour in contours:
-    y, x = contour[:, 0], contour[:, 1]
-    x_min, x_max = np.min(x), np.max(x)
-    y_min, y_max = np.min(y), np.max(y)
-    rectangles.append((x_min, y_min, x_max, y_max))
+# Détection de coins
+corners = cv2.goodFeaturesToTrack(np.array(contour_image), maxCorners=100, qualityLevel=0.5, minDistance=50)
 
+# Créer un objet ImageDraw pour dessiner sur l'image
+draw = ImageDraw.Draw(image)
 
-df = pd.DataFrame(rectangles, columns=['X1', 'Y1', 'X2', 'Y2'])
-df.to_csv('coordonnees_rectangles.csv', index=False)
+# Dessiner les coins détectés
+for corner in corners:
+    x, y = corner[0]
+    draw.ellipse((x-2, y-2, x+2, y+2), fill="white")  # dessiner un petit cercle aux coordonnées du coin
+
+# Enregistrer l'image avec les coins détectés
+image.save("image_avec_corners.png")
