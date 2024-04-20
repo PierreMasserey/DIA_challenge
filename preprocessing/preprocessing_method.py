@@ -62,7 +62,8 @@ def preprocessing(image, nom_fichier):
             writer = csv.writer(file)
             writer.writerow(['X', 'Y', 'Color'])  # Écrire l'en-tête du fichier CSV
             for corner in all_corners_with_color:
-                writer.writerow(corner)  # Écrire les coordonnées de chaque coin avec leur couleur
+                writer.writerow(corner)
+        all_corners_with_color.clear()
 
     def process_corners(image, color_name):
         # Convertir l'image en niveaux de gris
