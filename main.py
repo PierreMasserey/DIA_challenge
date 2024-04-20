@@ -3,44 +3,35 @@ import numpy as np
 import random
 from PIL import Image
 import measures
-##Path constant
-IMAGES = "./layout_analysis"
-GROUND_TRUTH = IMAGES + "/ground_truth/"
-ORG = IMAGES + "/images/"
-
-## INDEX CORRESPONDANCE
-TEXT_AREA = 0 # Yellow
-LARGE_CAPTIAL = 1 # light blue
-FILLER = 2 #Green
-SMALL_CAPITAL = 3 #MAGENTA
-DECORATION = 4 #RED
-TEXT_LINE = 5 #BLUE
-BACKGROUND = 6 #Black
-
-LAYOUTS = [DECORATION, TEXT_AREA, TEXT_LINE]
-
+import model
+import constant
 
 def random_classifier(image):
     width, height = image.size
     classified_image = Image.new("P",(width, height))
     for i in range(width):
         for j in range(height):
-            classified_image.putpixel((i,j),random.choice(LAYOUTS))
+            classified_image.putpixel((i,j),random.choice(constant.LAYOUTS))
     return classified_image
 
+def pre_process_ground_truth(image):
+    image_rgb = image.convert("RGB")
+    width, height = image.size
+    for x in range(width):
+        for y in range(height):
+            r, g, b = image_rgb.getpixel((x, y))
+            pixel_color = (r, g, b)
+            if pixel_color not in constant.LAYOUTS:
+                image.putpixel((x, y), (255,192,203))  # Mettre à noir le pixel
+    return image
+
+def pre_process_all_ground_truth_images():
+     for file in os.listdir(constant.ORG):
+        ground_truth_file = constant.GROUND_TRUTH + file.replace(".jpg",".gif")
+        ground_truth_image = Image.open(ground_truth_file)
+        pre_process_ground_truth(ground_truth_image).save(constant.PROCESS_GROUND_TRUTH+"/"+file.replace(".jpg",".gif"))
 
 if __name__ == "__main__":
-    for file in os.listdir(ORG):
-        ground_truth_file = GROUND_TRUTH + file.replace(".jpg",".gif")
-        if not os.path.exists(ground_truth_file):
-            raise ValueError("Ground truth file not found")
-        classified_image = random_classifier(Image.open(ORG+"/"+file))
-        ground_truth_image = Image.open(ground_truth_file)
-        print(measures.compute_precision(classified_image,ground_truth_image))
-        print(measures.compute_iou(classified_image,ground_truth_image,DECORATION))
-        print(measures.compute_iou(classified_image,ground_truth_image,TEXT_AREA))
-        print(measures.compute_iou(classified_image,ground_truth_image,TEXT_LINE))
-        print(measures.compute_recall(classified_image,ground_truth_image,DECORATION))
-        print(measures.compute_recall(classified_image,ground_truth_image,TEXT_AREA))
-        print(measures.compute_recall(classified_image,ground_truth_image,TEXT_LINE))
-        break
+    #pre_process_all_ground_truth_images() ### A commenter si l'on a pas besoin de pre-process les ground truth: On met juste en noir tous les pixels dans les gorund truth que l'on a pas beson de détecter. Cela permet de ne pas entrainter notre model sur des points non nécessaire
+    trained_model, test_loss, test_acc = model.run_model()
+    print(test_loss, test_acc)

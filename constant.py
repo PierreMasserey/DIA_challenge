@@ -1,0 +1,16 @@
+##Path constant
+IMAGES = "./layout_analysis"
+GROUND_TRUTH = IMAGES + "/ground_truth/"
+PROCESS_GROUND_TRUTH = GROUND_TRUTH +"process/"
+ORG = IMAGES + "/images/"
+
+## INDEX CORRESPONDANCE
+TEXT_AREA = (255,255,0) # Yellow
+LARGE_CAPTIAL = 1 # light blue
+FILLER = 2 #Green
+SMALL_CAPITAL = 3 #MAGENTA
+DECORATION = (255,0,0) #RED
+TEXT_LINE = (0,0,255) #BLUE
+BACKGROUND = 6 #Black
+
+LAYOUTS = [DECORATION, TEXT_AREA, TEXT_LINE]
