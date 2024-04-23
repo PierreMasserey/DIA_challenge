@@ -1,11 +1,7 @@
 import pandas as pd
 from shapely.geometry import Polygon
 
-# Lire le premier fichier CSV dans un DataFrame pandas
-df1 = pd.read_csv("csvv.csv")
 
-# Lire le deuxième fichier CSV dans un autre DataFrame pandas
-df2 = pd.read_csv("csvv.csv")
 
 # Créer des polygones pour le premier fichier
 polygons1 = {}
@@ -14,6 +10,15 @@ current_points = []
 
 
 def compute_iou(csv1, csv2):
+
+
+    # Lire le premier fichier CSV dans un DataFrame pandas
+    df1 = pd.read_csv(csv1)
+
+    # Lire le deuxième fichier CSV dans un autre DataFrame pandas
+    df2 = pd.read_csv(csv2)
+
+
     for idx, row in df1.iterrows():
         color = row['Color']
         if current_id is None:
