@@ -5,6 +5,8 @@ from PIL import Image
 import measures
 import model
 import constant
+import compute_iou
+import image_to_csv
 
 def random_classifier(image):
     width, height = image.size
@@ -58,5 +60,8 @@ if __name__ == "__main__":
    prediction = my_trained_model.predict(input)
    predicted_rgb_image = post_process_prediction(prediction)
    image = Image.fromarray(np.uint8(predicted_rgb_image))
+   image_to_csv.image_to_csv(image, "tempname")
+   compute_iou.compute_iou("csv_groundtruth/tempname.csv","tempname.csv" )
+
    image.save("test.jpg")
 

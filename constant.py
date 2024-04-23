@@ -1,8 +1,8 @@
 ##Path constant
-IMAGES = "./layout_analysis"
-GROUND_TRUTH = IMAGES + "/ground_truth/"
+IMAGES = "data/"
+GROUND_TRUTH = "ground_truth/"
 PROCESS_GROUND_TRUTH = GROUND_TRUTH +"process/"
-ORG = IMAGES + "/images/"
+ORG = IMAGES + "train_75/"
 
 ## INDEX CORRESPONDANCE
 TEXT_AREA = (255,255,0) # Yellow
