@@ -1,8 +1,20 @@
 ##Path constant
-IMAGES = "data/"
+IMAGES = "./data"
 GROUND_TRUTH = "ground_truth/"
 PROCESS_GROUND_TRUTH = GROUND_TRUTH +"process/"
-ORG = IMAGES + "train_75/"
+
+TRAIN = IMAGES + "/train_75"
+TRAIN_GROUND_TRUTH = IMAGES + "/train_75_ground_truth"
+TRAIN_PROCESS_GROUND_TRUTH = TRAIN_GROUND_TRUTH + "/process"
+
+VALIDATION = IMAGES + "/validation_10"
+VALIDATION_GROUND_TRUTH = IMAGES + "/validation_10_ground_truth"
+VALIDATION_PROCESS_GROUND_TRUTH = VALIDATION_GROUND_TRUTH +"/process"
+
+TEST = IMAGES + "/test_15"
+TEST_GROUND_TRUTH = IMAGES + "/test_15_ground_truth"
+TEST_PROCESS_GROUND_TRUTH = TEST_GROUND_TRUTH+"/process"
+
 
 ## INDEX CORRESPONDANCE
 TEXT_AREA = (255,255,0) # Yellow

@@ -1,4 +1,5 @@
 import pandas as pd
+import os
 from shapely.geometry import Polygon
 
 
@@ -13,7 +14,7 @@ def compute_iou(csv1, csv2):
 
 
     # Lire le premier fichier CSV dans un DataFrame pandas
-    df1 = pd.read_csv(csv1)
+    df1 = pd.read_csv(os.path.realpath(csv1))
 
     # Lire le deuxième fichier CSV dans un autre DataFrame pandas
     df2 = pd.read_csv(csv2)
