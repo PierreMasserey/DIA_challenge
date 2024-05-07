@@ -83,26 +83,8 @@ def image_to_csv(image, nom_fichier):
     # Appeler la fonction process_corners pour chaque image
     process_corners(red_image, "red")
     process_corners(blue_image, "blue")
-    process_corners(light_blue_image, "light_blue")
+    process_corners(light_blue_image, "lightblue")
     process_corners(purple_image, "purple")
 
     # Enregistrer toutes les coordonnées avec leur couleur dans un fichier CSV
     save_corners_with_color_to_csv(nom_fichier  +".csv")
-
-
-def process_multiple_images():
-    for nom_fichier in os.listdir(dossier_images):
-        chemin_fichier = os.path.join(dossier_images, nom_fichier)
-        # Vérifier si le fichier est une image (vous pouvez ajouter plus d'extensions si nécessaire)
-        if os.path.isfile(chemin_fichier) and nom_fichier.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')):
-            try:
-                # Ouvrir l'image avec PIL
-                with Image.open(chemin_fichier) as img:
-                    # Faites ici ce que vous voulez avec l'image, par exemple :
-                    preprocessing(img, nom_fichier)
-                    
-                    # Vous pouvez ajouter vos opérations sur l'image ici
-                    # Par exemple, sauvegarder l'image modifiée, la redimensionner, etc.
-                    
-            except Exception as e:
-                print(f"Erreur lors du traitement de l'image {nom_fichier}: {e}")
