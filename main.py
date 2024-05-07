@@ -1,12 +1,13 @@
 import os
 import numpy as np
 import random
-from PIL import Image
+from PIL import Image, ImageFilter
 import measures
 import model
 import constant
 import compute_iou
 import image_to_csv
+
 
 def random_classifier(image):
     width, height = image.size
@@ -65,7 +66,27 @@ def pre_process_test():
             ground_truth_image = Image.open(constant.TEST_GROUND_TRUTH+"/"+file)
             pre_process_ground_truth(ground_truth_image).save(constant.TEST_PROCESS_GROUND_TRUTH+"/"+file.replace(".jpg",".gif"))
         except:
-            continue   
+            continue  
+def separateColor(image):
+    np_image = np.array(image)
+    array_decoration = np.copy(np_image)
+    array_text_area =  np.copy(np_image)
+    array_text_line =  np.copy(np_image)
+
+    decoration = np.array(constant.DECORATION)
+    text_area = np.array(constant.TEXT_AREA)
+    text_line = np.array(constant.TEXT_LINE)
+
+    mask_decoration = np.all(array_decoration == decoration,axis=-1)
+    mask_text_area = np.all(array_text_area == text_area ,axis=-1)
+    mask_text_line = np.all(array_text_line == text_line ,axis=-1)
+
+    array_decoration[np.where(~mask_decoration)]=[0,0,0]
+    array_text_area [np.where(~mask_text_area) ] =[0,0,0]
+    array_text_line [np.where(~mask_text_line) ] = [0,0,0]
+    
+    return Image.fromarray(array_decoration), Image.fromarray(array_text_area), Image.fromarray(array_text_line)
+
 
 def pre_process_all_ground_truth_images():
     pre_process_train()
@@ -74,17 +95,20 @@ def pre_process_all_ground_truth_images():
 
 if __name__ == "__main__":
    #pre_process_all_ground_truth_images() ### A commenter si l'on a pas besoin de pre-process les ground truth: On met juste en noir tous les pixels dans les gorund truth que l'on a pas beson de détecter. Cela permet de ne pas entrainter notre model sur des points non nécessaire
-   trained_model, test_loss, test_acc = model.run_model()
-   print(test_loss, test_acc)
-   model.save_my_model(trained_model)
+   #trained_model, test_loss, test_acc = model.run_model()
+   #print(test_loss, test_acc)
+   #model.save_my_model(trained_model)
    my_trained_model = model.load_model('model_test_2.keras')
    input = model.load_and_preprocess_images_input(constant.TEST,0,1)
    prediction = my_trained_model.predict(input)
    predicted_rgb_image = post_process_prediction(prediction)
    image = Image.fromarray(np.uint8(predicted_rgb_image))
+   image_decoration, image_text_area, image_text_line = separateColor(image)
    image_to_csv.image_to_csv(image, "tempname")
    print(os.path.realpath("./csv_groundtruth/utp-0110-061v.gif.csv"))
    #compute_iou.compute_iou("csv_groundtruth/utp-0110-061v.gif.csv","tempname.csv" )
-
+   image_decoration.save("decoration.jpg")
+   image_text_area.save("text_area.jpg")
+   image_text_line.save("text_line.jpg")
    image.save("test.jpg")
 
