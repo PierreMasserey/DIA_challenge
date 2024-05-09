@@ -7,6 +7,7 @@ import model
 import constant
 import compute_iou
 import image_to_csv
+import cv2
 
 
 def random_classifier(image):
@@ -85,7 +86,7 @@ def separateColor(image):
     array_text_area [np.where(~mask_text_area) ] =[0,0,0]
     array_text_line [np.where(~mask_text_line) ] = [0,0,0]
     
-    return Image.fromarray(array_decoration), Image.fromarray(array_text_area), Image.fromarray(array_text_line)
+    return array_decoration, array_text_area, array_text_line
 
 
 def pre_process_all_ground_truth_images():
@@ -99,16 +100,66 @@ if __name__ == "__main__":
    #print(test_loss, test_acc)
    #model.save_my_model(trained_model)
    my_trained_model = model.load_model('model_test_2.keras')
-   input = model.load_and_preprocess_images_input(constant.TEST,0,1)
-   prediction = my_trained_model.predict(input)
-   predicted_rgb_image = post_process_prediction(prediction)
-   image = Image.fromarray(np.uint8(predicted_rgb_image))
-   image_decoration, image_text_area, image_text_line = separateColor(image)
-   image_to_csv.image_to_csv(image, "tempname")
-   print(os.path.realpath("./csv_groundtruth/utp-0110-061v.gif.csv"))
-   #compute_iou.compute_iou("csv_groundtruth/utp-0110-061v.gif.csv","tempname.csv" )
-   image_decoration.save("decoration.jpg")
-   image_text_area.save("text_area.jpg")
-   image_text_line.save("text_line.jpg")
-   image.save("test.jpg")
+   
+   for filename in os.listdir(constant.TEST):
+       images = []
+       image = Image.open(os.path.join(constant.TEST, filename)).convert("RGB")
+       images.append(np.array(image)) 
+       prediction = my_trained_model.predict(np.array(images))
+       
+       predicted_rgb_image = post_process_prediction(prediction)
+       
+       image = Image.fromarray(np.uint8(predicted_rgb_image))
+       ##Color separation
+       array_decoration, array_text_area, array_text_line = separateColor(image)
+       
+       image_decoration = array_decoration[:, :, ::-1].copy()
+       image_text_area = array_text_area[:, :, ::-1].copy()
+       image_text_line = array_text_line[:, :, ::-1].copy()
+       
+       #Remove noise for each image  
+       binary_image_decoration = cv2.cvtColor(image_decoration, cv2.COLOR_BGR2GRAY)
+       _, binary_image_decoration = cv2.threshold(binary_image_decoration, 0, 255, cv2.THRESH_BINARY)
+       
+       binary_text_area = cv2.cvtColor(image_text_area, cv2.COLOR_BGR2GRAY)
+       _, image_binaire_text_area = cv2.threshold(binary_text_area, 127, 255, cv2.THRESH_BINARY)
+       
+       binary_text_line = cv2.cvtColor(image_text_line, cv2.COLOR_BGR2GRAY)
+       _, image_binaire_text_line = cv2.threshold(binary_text_line, 0, 255, cv2.THRESH_BINARY)
+       
+       kernel = np.ones((3,3), dtype=np.uint8)
+       
+       denoised_decoration = cv2.morphologyEx(binary_image_decoration, cv2.MORPH_OPEN, kernel)
+       denoised_text_area =  cv2.morphologyEx(image_binaire_text_area, cv2.MORPH_OPEN, kernel)
+       denoised_text_line =  cv2.morphologyEx(image_binaire_text_line, cv2.MORPH_OPEN, kernel)
+       
+       #Put image in corresponding color 
+       decoration = np.zeros((array_decoration.shape), dtype=np.uint8)
+       text_area = np.zeros((array_text_area.shape), dtype=np.uint8)
+       text_line = np.zeros((array_text_line.shape),dtype=np.uint8)
+       
+       decoration[denoised_decoration == 255] = np.array(constant.DECORATION) 
+       text_area[denoised_text_area == 255] = np.array(constant.TEXT_AREA)
+       text_line[denoised_text_line == 255] = np.array(constant.TEXT_LINE)
+       
+       # Afficher les images
+       cv2.imshow('Image denoised deco ',     denoised_decoration)
+       cv2.imshow('Image denoised text area', denoised_text_area)
+       cv2.imshow('Image denoised text line ',denoised_text_line)
+       
+       cv2.imshow('Image deco ',     decoration)
+       cv2.imshow('Image text area', text_area)
+       cv2.imshow('Image text line ',text_line)
+       cv2.waitKey(0) 
+
+
+
+   
+   ##image_to_csv.image_to_csv(image, "tempname")
+   ##print(os.path.realpath("./csv_groundtruth/utp-0110-061v.gif.csv"))
+   ###compute_iou.compute_iou("csv_groundtruth/utp-0110-061v.gif.csv","tempname.csv" )
+   ##image_decoration.save("decoration.jpg")
+   ##image_text_area.save("text_area.jpg")
+   ##image_text_line.save("text_line.jpg")
+   ##image.save("test.jpg")
 
