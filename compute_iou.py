@@ -81,6 +81,13 @@ def match_polygons(polygons1, polygons2):
 
     return matched_polygons
 
+def print_confusion_matrix(tp, fp, tn, fn):
+    print("Confusion Matrix:")
+    print(f"{'Actual/Predicted':<20}{'Positive':<15}{'Negative':<15}")
+    print(f"{'Positive':<20}{tp:<15}{fn:<15}")
+    print(f"{'Negative':<20}{fp:<15}{tn:<15}")
+
+
 
 
 def compute_iou(csv1, csv2):
@@ -153,6 +160,12 @@ def compute_iou(csv1, csv2):
     # Afficher les IDs sans correspondance dans le fichier 2
     for id in unmatched_ids_csv2:
         print(f"Aucun polygone correspondant trouvé pour l'ID {id} dans le deuxième fichier.")
+
+    print_confusion_matrix(average_iou*100 ,num_ids_csv2 - (num_matched_ids+1)  ,'X' , len(unmatched_ids_csv2))
+
+    
+    
+
 
 #compute_iou("test.csv", "test2.csv")
 
