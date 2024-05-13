@@ -19,9 +19,9 @@ def create_polygons(csv):
                 polygons[current_id] = []
             if len(current_points) >= 3:
                 polygons[current_id].append(current_points)
-            current_points = []
+            current_points = []  # Réinitialiser la liste des points
             current_id = color
-        current_points.append((row['X'], row['Y']))
+        current_points.append((row['X'], row['Y']))  # Ajouter les coordonnées à la liste
 
     if current_id not in polygons:
         polygons[current_id] = []
@@ -31,8 +31,10 @@ def create_polygons(csv):
     return polygons
 
 
+
 def calculate_iou(poly1, poly2):
     return Polygon(poly1).intersection(Polygon(poly2)).area / Polygon(poly1).union(Polygon(poly2)).area
+
 
 def match_polygons(polygons1, polygons2):
     matched_polygons = {}
@@ -68,7 +70,7 @@ def match_polygons(polygons1, polygons2):
             matching_polygon = None
             matching_id = None
             for id1, points1 in groups1[color]:
-                iou = calculate_iou(points1, points2)
+                iou = calculate_iou(points1, points2)  # Calculer l'IOU entre les polygones
                 if iou > max_iou:
                     max_iou = iou
                     matching_polygon = points1
@@ -81,15 +83,22 @@ def match_polygons(polygons1, polygons2):
 
 
 
-
 def compute_iou(csv1, csv2):
     polygons1 = create_polygons(csv1)
     polygons2 = create_polygons(csv2)
+
     matched_polygons = match_polygons(polygons1, polygons2)
+
+
+
+
+
 
     # Compter le nombre d'IDs dans chaque fichier
     num_ids_csv1 = len(polygons1)
     num_ids_csv2 = len(polygons2)
+
+
 
     # Compter le nombre d'IDs dans le fichier 2 ayant un ID correspondant dans le fichier 1
     num_matched_ids = sum(len(matches) for matches in matched_polygons.values())
@@ -106,12 +115,40 @@ def compute_iou(csv1, csv2):
 
     print(f"Nombre d'IDs dans le fichier 1 : {num_ids_csv1}")
     print(f"Nombre d'IDs dans le fichier 2 : {num_ids_csv2}")
-    print(f"Nombre d'IDs du fichier 2 avec un ID correspondant dans le fichier 1 : {num_matched_ids+1}")
+    print(f"Nombre de zones true positive : {num_matched_ids+1}")
+    print(f"Nombre de zones false positive : {num_ids_csv2 - (num_matched_ids+1)}")
+    print(f"Nombre de zones false negative : {len(unmatched_ids_csv2)}")
 
     # Afficher les correspondances
+    iou_results = []
+    total_iou = 0
+
     for color, matches in matched_polygons.items():
         for matched_polygon in matches:
-            print(f"Polygone ID {matched_polygon['id']} du premier fichier correspond au polygone ID {color} du deuxième fichier.")
+            id1 = matched_polygon['id']
+            id2 = color
+            points1 = polygons1.get(id1, [])
+            points2 = polygons2.get(id2, [])
+
+            if not points1 or not points2:
+                print("La liste des points est vide pour au moins l'un des polygones. Arrêt de la comparaison.")
+                break
+
+            poly1 = Polygon(points1[0])
+            poly2 = Polygon(points2[0])
+
+            iou = calculate_iou(poly1, poly2)
+            total_iou += iou
+            iou_results.append(iou)
+
+            print(f"Polygone ID {id1} du premier fichier correspond au polygone ID {id2} du deuxième fichier. L'IoU entre les deux est de {iou*100:.2f}%.")
+
+    if iou_results:
+        average_iou = total_iou / len(iou_results)
+        print(f"IoU moyen : {average_iou*100:.2f}%")
+    else:
+        print("Aucun IoU calculé car aucune correspondance trouvée.")
+
 
     # Afficher les IDs sans correspondance dans le fichier 2
     for id in unmatched_ids_csv2:
@@ -119,6 +156,3 @@ def compute_iou(csv1, csv2):
 
 #compute_iou("test.csv", "test2.csv")
 
-
-
-            
