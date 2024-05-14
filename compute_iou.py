@@ -161,11 +161,11 @@ def compute_iou(csv1, csv2):
     for id in unmatched_ids_csv2:
         print(f"Aucun polygone correspondant trouvé pour l'ID {id} dans le deuxième fichier.")
 
-    print_confusion_matrix(average_iou*100 ,num_ids_csv2 - (num_matched_ids+1)  ,'X' , len(unmatched_ids_csv2))
+    print_confusion_matrix(round(average_iou*100) ,num_ids_csv2 - (num_matched_ids+1)  ,'X' , len(unmatched_ids_csv2))
 
     
     
 
 
-#compute_iou("test.csv", "test2.csv")
+compute_iou("utp-0110-014v.gif.csv", "test.csv")
 
