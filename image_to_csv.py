@@ -92,3 +92,7 @@ def  image_to_csv(image, nom_fichier):
 
     # Enregistrer toutes les coordonnées avec leur couleur dans un fichier CSV
     save_corners_with_color_to_csv(nom_fichier  +".csv")
+
+
+tempimage = Image.open("utp-0110-023v.gif")
+image_to_csv(tempimage, "pourvoir")
