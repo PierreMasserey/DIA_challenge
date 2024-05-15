@@ -140,7 +140,8 @@ if __name__ == "__main__":
    ##print(test_loss, test_acc)
    #model.save_my_model(trained_model)
    my_trained_model = model.load_model('model_test_2.keras')
-   my_trained_model.summary()
+   Ious = []
+   percentages = []
    for filename in os.listdir(constant.TEST):
        images = []
        image = Image.open(os.path.join(constant.TEST, filename)).convert("RGB")
@@ -168,17 +169,17 @@ if __name__ == "__main__":
        binary_text_line = cv2.cvtColor(image_text_line, cv2.COLOR_BGR2GRAY)
        _, image_binaire_text_line = cv2.threshold(binary_text_line, 0, 255, cv2.THRESH_BINARY)
        
-       kernel_deco = np.ones((8,8), dtype=np.uint8)
-       kernel_area = np.ones((6,6), dtype=np.uint8)
-       kernel_line = np.ones((6,6), dtype=np.uint8)
+       kernel_open = np.ones((2,2), dtype=np.uint8)
+       kernel_medium = np.ones((3,3), dtype=np.uint8)
+       kernel_close = np.ones((4,4), dtype=np.uint8)
        
-       denoised_decoration = cv2.morphologyEx(binary_image_decoration, cv2.MORPH_OPEN, kernel_deco)
-       denoised_text_area =  cv2.morphologyEx(image_binaire_text_area, cv2.MORPH_OPEN, kernel_area)
-       denoised_text_line =  cv2.morphologyEx(image_binaire_text_line, cv2.MORPH_OPEN, kernel_line)
+       denoised_decoration = cv2.morphologyEx(binary_image_decoration, cv2.MORPH_OPEN, kernel_close)
+       denoised_text_area =  cv2.morphologyEx(image_binaire_text_area, cv2.MORPH_OPEN, kernel_close)
+       denoised_text_line =  cv2.morphologyEx(image_binaire_text_line, cv2.MORPH_OPEN, kernel_open)
        
-       denoised_decoration = cv2.morphologyEx(denoised_decoration, cv2.MORPH_CLOSE, kernel_deco)
-       denoised_text_area =  cv2.morphologyEx(denoised_text_area, cv2.MORPH_CLOSE, kernel_area)
-       denoised_text_line =  cv2.morphologyEx(denoised_text_line, cv2.MORPH_CLOSE, kernel_line) 
+       denoised_decoration = cv2.morphologyEx(denoised_decoration, cv2.MORPH_CLOSE, kernel_medium)
+       denoised_text_area =  cv2.morphologyEx(denoised_text_area, cv2.MORPH_CLOSE, kernel_medium)
+       denoised_text_line =  cv2.morphologyEx(denoised_text_line, cv2.MORPH_CLOSE, kernel_close)
 
 
        #
@@ -187,14 +188,15 @@ if __name__ == "__main__":
        text_area = np.zeros((array_text_area.shape), dtype=np.uint8)
        text_line = np.zeros((array_text_line.shape),dtype=np.uint8)
        #
+       
        decoration[denoised_decoration == 255] = np.array(constant.DECORATION) 
        text_area[denoised_text_area == 255] = np.array(constant.TEXT_AREA)
        text_line[denoised_text_line == 255] = np.array(constant.TEXT_LINE)
        
+       
        #
        height, width, classes = np.uint8(image).shape
        final = np.zeros((height, width, classes),dtype=np.uint8)
-
        mask_decoration = np.all(decoration == constant.DECORATION,axis=-1)
        mask_text_area = np.all(text_area == constant.TEXT_AREA ,axis=-1)
        mask_text_line = np.all(text_line == constant.TEXT_LINE ,axis=-1)
@@ -202,11 +204,13 @@ if __name__ == "__main__":
        final[np.where(mask_decoration)]=constant.DECORATION
        final[np.where(mask_text_area)]=constant.TEXT_AREA
        final[np.where(mask_text_line)]=constant.TEXT_LINE
+       
 
        image_final = Image.fromarray(final,'RGB')
        image_to_csv.image_to_csv(image_final, "tempname")
        image_to_csv.image_to_csv(Image.open(constant.TEST_GROUND_TRUTH+"/"+filename.replace(".jpg",".gif")),"tempname2")
-       compute_iou.compute_iou("tempname2.csv","tempname.csv" )
+       iou = compute_iou.compute_iou("tempname2.csv","tempname.csv" )
+       Ious.append(iou)
     
        test =  np.array(Image.open(constant.TEST_GROUND_TRUTH+"/"+filename.replace(".jpg",".gif")).convert("RGB"), dtype=np.uint8)
        
@@ -223,9 +227,12 @@ if __name__ == "__main__":
 
        total_pixels_identiques = np.sum(np.all(final[non_black_pixels_mask] == test[non_black_pixels_mask], axis=-1))
        pourcentage_pixels_identiques =( total_pixels_identiques / np.count_nonzero(final[non_black_pixels_mask])) * 100
+       percentages.append(pourcentage_pixels_identiques)
        print("Nombre de pixels identiques :", total_pixels_identiques)
        print("Pourcentage de pixels identiques :", pourcentage_pixels_identiques)
        stop = 1
+   print("Mean of Ious :", np.mean(Ious)) 
+   print("Mean of percentages of corresponding pixels :", np.mean(percentages))  
        
   
 

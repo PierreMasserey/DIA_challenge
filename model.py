@@ -77,29 +77,6 @@ def run_model():
     model.add(layers.PReLU())
     model.add(layers.Conv2D(16, (2,2), activation='relu', padding='same'))
     model.add(layers.MaxPooling2D(pool_size=(2,2),strides=(1, 1),padding='same'))
-#
-    #model.add(layers.Dense(16))
-    #model.add(layers.PReLU())
-    #model.add(layers.Conv2D(32, (2,2), activation='relu', padding='same'))
-    #model.add(layers.MaxPooling2D(pool_size=(2,2),strides=(1, 1),padding='same'))
-
-
-   
-    #
-    #model.add(layers.Dense(32, activation='relu'))
-
-    #model.add(layers.Conv2D(32, (3, 3), activation='relu', padding='same'))
-    #model.add(layers.MaxPooling2D(pool_size=(2, 2),strides=(1, 1),padding='same'))
-    #model.add(layers.Dense(16, activation='relu'))
-
-    #model.add(layers.Conv2D(32, (3, 3), activation='relu', padding='same'))
-    #model.add(layers.MaxPooling2D(pool_size=(2, 2),strides=(1, 1),padding='same'))
-    #model.add(layers.Dense(32, activation='relu'))
-
-    #model.add(layers.Dense(32, activation='relu'))
-    #model.add(layers.Dense(16, activation='relu'))
-
-    #model.add(layers.Dense(8, activation='relu'))
     model.add(layers.Dense(4, activation='softmax'))
     model.add(layers.PReLU())
 
@@ -111,12 +88,7 @@ def run_model():
     train_images = load_and_preprocess_images_input(constant.TRAIN,0,50)
     train_labels = load_and_preprocess_images_output(constant.TRAIN_PROCESS_GROUND_TRUTH,0,50) 
     validation_images = load_and_preprocess_images_input(constant.VALIDATION,0,10)
-    validation_labels = load_and_preprocess_images_output(constant.TRAIN_PROCESS_GROUND_TRUTH,0,10) 
-
-    #train_images = load_and_preprocess_images_input(constant.TRAIN,0,1)
-    #train_labels = load_and_preprocess_images_output(constant.TRAIN_GROUND_TRUTH,0,1) 
-    #validation_images = load_and_preprocess_images_input(constant.VALIDATION,0,1)
-    #validation_labels = load_and_preprocess_images_output(constant.VALIDATION_GROUND_TRUTH,0,1) 
+    validation_labels = load_and_preprocess_images_output(constant.VALIDATION_PROCESS_GROUND_TRUTH,0,10) 
 
     
     model.summary()
