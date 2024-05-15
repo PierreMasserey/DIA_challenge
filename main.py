@@ -10,6 +10,15 @@ import image_to_csv
 import cv2
 
 
+erosion_size = 0
+max_elem = 2
+max_kernel_size = 21
+title_trackbar_element_shape = 'Element:\n 0: Rect \n 1: Cross \n 2: Ellipse'
+title_trackbar_kernel_size = 'Kernel size:\n 2n +1'
+title_erosion_window = 'Erosion Demo'
+title_dilation_window = 'Dilation Demo'
+
+
 def random_classifier(image):
     width, height = image.size
     classified_image = Image.new("P",(width, height))
@@ -39,9 +48,14 @@ def post_process_prediction(predictions):
                 label = np.argmax(prediction[x, y])
                 if label == 0:
                     rgb_value = (0,0,0)
-                else:    
-                    rgb_value = np.array([i for i in  constant.MAPPING_LABEL if constant.MAPPING_LABEL[i]==(label)])
-                rgb_image[x][y] = rgb_value
+                elif label == 1:
+                    rgb_value = constant.DECORATION
+                elif label == 2:
+                    rgb_value = constant.TEXT_AREA
+                else:
+                    rgb_value = constant.TEXT_LINE
+                
+                rgb_image[x][y] = np.array(rgb_value)
 
         return rgb_image
     
@@ -94,25 +108,52 @@ def pre_process_all_ground_truth_images():
     pre_process_validation()
     pre_process_test()
 
+
+def morph_shape(val):
+    if val == 0:
+        return cv2.MORPH_RECT
+    elif val == 1:
+        return cv2.MORPH_CROSS
+    elif val == 2:
+        return cv2.MORPH_ELLIPSE
+    
+def erosion(image):
+    erosion_size = cv2.getTrackbarPos(title_trackbar_kernel_size, title_erosion_window)
+    erosion_shape = morph_shape(cv2.getTrackbarPos(title_trackbar_element_shape, title_erosion_window))
+
+    element = cv2.getStructuringElement(erosion_shape, (2 * erosion_size + 1, 2 * erosion_size + 1), (erosion_size, erosion_size))
+
+    return  cv2.erode(image, element)
+
+
+def dilatation(image):
+    dilatation_size = cv2.getTrackbarPos(title_trackbar_kernel_size, title_dilation_window)
+    dilation_shape = morph_shape(cv2.getTrackbarPos(title_trackbar_element_shape, title_dilation_window))
+    element = cv2.getStructuringElement(dilation_shape, (2 * dilatation_size + 1, 2 * dilatation_size + 1),(dilatation_size, dilatation_size))
+    return cv2.dilate(image, element)
+
+
+
 if __name__ == "__main__":
    #pre_process_all_ground_truth_images() ### A commenter si l'on a pas besoin de pre-process les ground truth: On met juste en noir tous les pixels dans les gorund truth que l'on a pas beson de détecter. Cela permet de ne pas entrainter notre model sur des points non nécessaire
    #trained_model, test_loss, test_acc = model.run_model()
-   #print(test_loss, test_acc)
+   ##print(test_loss, test_acc)
    #model.save_my_model(trained_model)
    my_trained_model = model.load_model('model_test_2.keras')
-   
+   my_trained_model.summary()
    for filename in os.listdir(constant.TEST):
        images = []
        image = Image.open(os.path.join(constant.TEST, filename)).convert("RGB")
        images.append(np.array(image)) 
        prediction = my_trained_model.predict(np.array(images))
+
        
        predicted_rgb_image = post_process_prediction(prediction)
        
-       image = Image.fromarray(np.uint8(predicted_rgb_image))
+       image = Image.fromarray(np.uint8(predicted_rgb_image),'RGB')
        ##Color separation
        array_decoration, array_text_area, array_text_line = separateColor(image)
-       
+
        image_decoration = array_decoration[:, :, ::-1].copy()
        image_text_area = array_text_area[:, :, ::-1].copy()
        image_text_line = array_text_line[:, :, ::-1].copy()
@@ -127,39 +168,70 @@ if __name__ == "__main__":
        binary_text_line = cv2.cvtColor(image_text_line, cv2.COLOR_BGR2GRAY)
        _, image_binaire_text_line = cv2.threshold(binary_text_line, 0, 255, cv2.THRESH_BINARY)
        
-       kernel = np.ones((3,3), dtype=np.uint8)
+       kernel_deco = np.ones((8,8), dtype=np.uint8)
+       kernel_area = np.ones((6,6), dtype=np.uint8)
+       kernel_line = np.ones((6,6), dtype=np.uint8)
        
-       denoised_decoration = cv2.morphologyEx(binary_image_decoration, cv2.MORPH_OPEN, kernel)
-       denoised_text_area =  cv2.morphologyEx(image_binaire_text_area, cv2.MORPH_OPEN, kernel)
-       denoised_text_line =  cv2.morphologyEx(image_binaire_text_line, cv2.MORPH_OPEN, kernel)
+       denoised_decoration = cv2.morphologyEx(binary_image_decoration, cv2.MORPH_OPEN, kernel_deco)
+       denoised_text_area =  cv2.morphologyEx(image_binaire_text_area, cv2.MORPH_OPEN, kernel_area)
+       denoised_text_line =  cv2.morphologyEx(image_binaire_text_line, cv2.MORPH_OPEN, kernel_line)
        
-       #Put image in corresponding color 
+       denoised_decoration = cv2.morphologyEx(denoised_decoration, cv2.MORPH_CLOSE, kernel_deco)
+       denoised_text_area =  cv2.morphologyEx(denoised_text_area, cv2.MORPH_CLOSE, kernel_area)
+       denoised_text_line =  cv2.morphologyEx(denoised_text_line, cv2.MORPH_CLOSE, kernel_line) 
+
+
+       #
+       ##Put image in corresponding color 
        decoration = np.zeros((array_decoration.shape), dtype=np.uint8)
        text_area = np.zeros((array_text_area.shape), dtype=np.uint8)
        text_line = np.zeros((array_text_line.shape),dtype=np.uint8)
-       
+       #
        decoration[denoised_decoration == 255] = np.array(constant.DECORATION) 
        text_area[denoised_text_area == 255] = np.array(constant.TEXT_AREA)
        text_line[denoised_text_line == 255] = np.array(constant.TEXT_LINE)
        
-       # Afficher les images
-       cv2.imshow('Image denoised deco ',     denoised_decoration)
-       cv2.imshow('Image denoised text area', denoised_text_area)
-       cv2.imshow('Image denoised text line ',denoised_text_line)
+       #
+       height, width, classes = np.uint8(image).shape
+       final = np.zeros((height, width, classes),dtype=np.uint8)
+
+       mask_decoration = np.all(decoration == constant.DECORATION,axis=-1)
+       mask_text_area = np.all(text_area == constant.TEXT_AREA ,axis=-1)
+       mask_text_line = np.all(text_line == constant.TEXT_LINE ,axis=-1)
+
+       final[np.where(mask_decoration)]=constant.DECORATION
+       final[np.where(mask_text_area)]=constant.TEXT_AREA
+       final[np.where(mask_text_line)]=constant.TEXT_LINE
+
+       image_final = Image.fromarray(final,'RGB')
+       image_to_csv.image_to_csv(image_final, "tempname")
+       image_to_csv.image_to_csv(Image.open(constant.TEST_GROUND_TRUTH+"/"+filename.replace(".jpg",".gif")),"tempname2")
+       compute_iou.compute_iou("tempname2.csv","tempname.csv" )
+    
+       test =  np.array(Image.open(constant.TEST_GROUND_TRUTH+"/"+filename.replace(".jpg",".gif")).convert("RGB"), dtype=np.uint8)
        
-       cv2.imshow('Image deco ',     decoration)
-       cv2.imshow('Image text area', text_area)
-       cv2.imshow('Image text line ',text_line)
-       cv2.waitKey(0) 
+       mask1 = np.all(final == [0, 0, 0], axis=-1)  # Masque pour les pixels noirs dans image1
+       mask2 = np.all(test == [0, 0, 0], axis=-1)
+
+
+       black_pixels_mask = np.logical_or(mask1, mask2)
+
+       # Inverser le masque pour obtenir un masque pour les pixels non-noirs
+       non_black_pixels_mask = np.invert(black_pixels_mask)
+
+       # Compter les pixels identiques en excluant les pixels noirs
+
+       total_pixels_identiques = np.sum(np.all(final[non_black_pixels_mask] == test[non_black_pixels_mask], axis=-1))
+       pourcentage_pixels_identiques =( total_pixels_identiques / np.count_nonzero(final[non_black_pixels_mask])) * 100
+       print("Nombre de pixels identiques :", total_pixels_identiques)
+       print("Pourcentage de pixels identiques :", pourcentage_pixels_identiques)
+       stop = 1
+       
+  
 
 
 
    
-   ##image_to_csv.image_to_csv(image, "tempname")
-   ##print(os.path.realpath("./csv_groundtruth/utp-0110-061v.gif.csv"))
-   ###compute_iou.compute_iou("csv_groundtruth/utp-0110-061v.gif.csv","tempname.csv" )
-   ##image_decoration.save("decoration.jpg")
-   ##image_text_area.save("text_area.jpg")
-   ##image_text_line.save("text_line.jpg")
-   ##image.save("test.jpg")
+   
+   
 

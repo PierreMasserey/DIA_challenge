@@ -9,7 +9,7 @@ dossier_images = "ground_truth"
 # Liste globale pour stocker toutes les coordonnées des coins
 all_corners_with_color = []
 
-def image_to_csv(image, nom_fichier):
+def  image_to_csv(image, nom_fichier):
     # Convertir l'image en mode RGB si elle n'est pas déjà en RGB
     image = image.convert("RGB")
 
@@ -20,6 +20,7 @@ def image_to_csv(image, nom_fichier):
     red_image = Image.new('RGB', (largeur, hauteur), color='black')
     light_blue_image = Image.new('RGB', (largeur, hauteur), color='black')
     purple_image = Image.new('RGB', (largeur, hauteur), color='black')
+    yellow_image = Image.new('RGB', (largeur, hauteur), color='black')
 
     # Parcourir tous les pixels de l'image
     for x in range(largeur):
@@ -36,6 +37,8 @@ def image_to_csv(image, nom_fichier):
                 light_blue_image.putpixel((x, y), (0, 255, 255))
             elif (r, g, b) == (255, 0, 255):
                 purple_image.putpixel((x, y), (255, 0, 255))
+            elif (r, g, b) == (255,255,0):
+                yellow_image.putpixel((x, y), (255,255,0))
 
     def add_corners_with_color_to_list(corners, color_name, index=None):
         for corner in corners:
@@ -85,6 +88,7 @@ def image_to_csv(image, nom_fichier):
     process_corners(blue_image, "blue")
     process_corners(light_blue_image, "lightblue")
     process_corners(purple_image, "purple")
+    process_corners(yellow_image, "yellow")
 
     # Enregistrer toutes les coordonnées avec leur couleur dans un fichier CSV
     save_corners_with_color_to_csv(nom_fichier  +".csv")
