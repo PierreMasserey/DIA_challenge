@@ -1,4 +1,9 @@
 # DIA_challenge
+## Work repartition
+- Files main.py and model.py done by Mathias Tonini
+- Files compute_iou.py and image_to_csv.py done by Pierre Masserey
+
+
 ## Initial data
 - 100 images
 - Ground truth
